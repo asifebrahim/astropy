@@ -249,6 +249,19 @@ def test_read_write_simple_specify_name(tmp_path):
     assert np.all(t2["a"] == t1["a"])
 
 
+def test_lowercase_commands():
+    example_qdp = """
+        read serr 1 2
+        1 0.5 1 0.5
+        """
+    t = Table.read(example_qdp, format="ascii.qdp")
+    assert t.colnames == ["col1", "col1_err", "col2", "col2_err"]
+    assert np.allclose(t["col1"], [1])
+    assert np.allclose(t["col1_err"], [0.5])
+    assert np.allclose(t["col2"], [1])
+    assert np.allclose(t["col2_err"], [0.5])
+
+
 def test_get_lines_from_qdp(tmp_path):
     test_file = str(tmp_path / "test.qdp")
     text_string = "A\nB"

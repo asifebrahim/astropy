@@ -37,6 +37,8 @@ def _line_type(line, delimiter=None):
     --------
     >>> _line_type("READ SERR 3")
     'command'
+    >>> _line_type("read serr 3")
+    'command'
     >>> _line_type(" \\n    !some gibberish")
     'comment'
     >>> _line_type("   ")
@@ -312,7 +314,6 @@ def _get_tables_from_qdp_file(qdp_file, input_colnames=None, delimiter=None):
                 if v.upper() == "NO":
                     values.append(np.ma.masked)
                 else:
-                    # Understand if number is int or float
                     try:
                         values.append(int(v))
                     except ValueError:
