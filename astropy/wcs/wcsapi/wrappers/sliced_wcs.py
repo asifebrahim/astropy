@@ -245,13 +245,18 @@ class SlicedLowLevelWCS(BaseWCSWrapper):
     def world_to_pixel_values(self, *world_arrays):
         world_arrays = tuple(map(np.asanyarray, world_arrays))
         world_arrays_new = []
+        # Determine dropped world dimensions and their constant world values
+        dropped_dims = [i for i in range(self._wcs.world_n_dim) if i not in self._world_keep]
+        dropped_vals = self.dropped_world_dimensions['value']
         iworld_curr = -1
         for iworld in range(self._wcs.world_n_dim):
             if iworld in self._world_keep:
                 iworld_curr += 1
                 world_arrays_new.append(world_arrays[iworld_curr])
             else:
-                world_arrays_new.append(1.)
+                # Use the constant world value for the dropped dimension
+                drop_index = dropped_dims.index(iworld)
+                world_arrays_new.append(dropped_vals[drop_index])
 
         world_arrays_new = np.broadcast_arrays(*world_arrays_new)
         pixel_arrays = list(self._wcs.world_to_pixel_values(*world_arrays_new))

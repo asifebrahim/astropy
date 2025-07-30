@@ -14,8 +14,50 @@ from astropy.units import Quantity
 from astropy.wcs.wcsapi.wrappers.sliced_wcs import SlicedLowLevelWCS, sanitize_slices, combine_slices
 from astropy.wcs.wcsapi.utils import wcs_info_str
 import astropy.units as u
+    from astropy.coordinates.spectral_coordinate import SpectralCoord
 
-from astropy.coordinates.spectral_coordinate import SpectralCoord
+def test_world_to_pixel_spectral_slice_consistent_with_full_wcs():
+    # Regression test for world_to_pixel when slicing spectral axis
+    nx = 100
+    ny = 25
+    nz = 2
+    wcs_header = {
+        'WCSAXES': 3,
+        'CRPIX1': (nx + 1) / 2,
+        'CRPIX2': (ny + 1) / 2,
+        'CRPIX3': 1.0,
+        'PC1_1': 0.0,
+        'PC1_2': -1.0,
+        'PC1_3': 0.0,
+        'PC2_1': 1.0,
+        'PC2_2': 0.0,
+        'PC2_3': -1.0,
+        'CDELT1': 5,
+        'CDELT2': 5,
+        'CDELT3': 0.055,
+        'CUNIT1': 'arcsec',
+        'CUNIT2': 'arcsec',
+        'CUNIT3': 'Angstrom',
+        'CTYPE1': 'HPLN-TAN',
+        'CTYPE2': 'HPLT-TAN',
+        'CTYPE3': 'WAVE',
+        'CRVAL1': 0.0,
+        'CRVAL2': 0.0,
+        'CRVAL3': 1.05,
+    }
+    fits_wcs = WCS(header=wcs_header)
+    celestial_frame = wcs_to_celestial_frame(fits_wcs)
+    pt = SkyCoord(Tx=0*u.arcsec, Ty=0*u.arcsec, frame=celestial_frame)
+    full_px, full_py, _ = fits_wcs.world_to_pixel(pt, 1.05*u.Angstrom)
+    # Slice first spectral plane (index 0) and compute spatial pixel coords
+    ll_slice = SlicedLowLevelWCS(fits_wcs, 0)
+    hl_slice = HighLevelWCSWrapper(ll_slice)
+    sl_px, sl_py = hl_slice.world_to_pixel(pt)
+    assert_allclose(sl_px, full_px)
+    assert_allclose(sl_py, full_py)
+
+from astropy.wcs.wcsapi.high_level_wcs_wrapper import HighLevelWCSWrapper
+from astropy.wcs.utils import wcs_to_celestial_frame
 
 # To test the slicing we start off from standard FITS WCS
 # objects since those implement the low-level API. We create
