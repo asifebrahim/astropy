@@ -1,3 +1,14 @@
+Version 5.1.1 (unreleased)
+==========================
+
+Bug Fixes
+---------
+
+- ``SlicedLowLevelWCS.world_to_pixel_values`` now uses the appropriate world
+  coordinate values for dropped axes, fixing incorrect pixel coordinates when
+  slicing WCSes with coupled axes.
+
+
 Version 5.1 (2022-05-23)
 ========================
 

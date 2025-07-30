@@ -153,6 +153,16 @@ class SlicedLowLevelWCS(BaseWCSWrapper):
             raise ValueError("Cannot slice WCS: the resulting WCS should have "
                              "at least one pixel and one world dimension.")
 
+        # Cache the world coordinate values for all axes at the reference
+        # pixel position defined by the slice. These values are needed when
+        # converting world to pixel coordinates after dropping one or more
+        # world axes. The dropped axes are, by definition, uncorrelated with
+        # the remaining pixel axes so their world coordinate values do not
+        # depend on the user supplied world coordinates.
+        self._reference_world_values = self._pixel_to_world_values_all(
+            *[0] * len(self._pixel_keep)
+        )
+
     @lazyproperty
     def dropped_world_dimensions(self):
         """
@@ -251,7 +261,11 @@ class SlicedLowLevelWCS(BaseWCSWrapper):
                 iworld_curr += 1
                 world_arrays_new.append(world_arrays[iworld_curr])
             else:
-                world_arrays_new.append(1.)
+                # Use the cached world value corresponding to the fixed pixel
+                # position of the dropped axis. This ensures that any
+                # correlations between pixel and world axes are properly taken
+                # into account when performing the transformation.
+                world_arrays_new.append(self._reference_world_values[iworld])
 
         world_arrays_new = np.broadcast_arrays(*world_arrays_new)
         pixel_arrays = list(self._wcs.world_to_pixel_values(*world_arrays_new))
